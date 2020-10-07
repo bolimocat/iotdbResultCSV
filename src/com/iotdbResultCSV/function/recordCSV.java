@@ -14,6 +14,7 @@ import java.util.Date;
 import com.iotdbResultCSV.dom.analyzeResultBean;
 import com.iotdbResultCSV.dom.insertBean;
 import com.iotdbResultCSV.dom.latencyrateRecordBean;
+import com.iotdbResultCSV.dom.operationAVGBean;
 
 public class recordCSV {
 
@@ -25,6 +26,7 @@ public class recordCSV {
 	Connection ct = null;
 	ResultSet rs = null;
 	Statement  stmt = null;
+	
 	
 	/**
 	 * 构造函数
@@ -83,38 +85,7 @@ try {
 		}
 	}
 	
-	/* 初始化分析结果CSV的表头 （未使用）
-	public void initAnalyzeCSV(String recordPath,String fileName){
-		FileWriter fw = null;
-		Date dt= new Date();
-		Long start = Long.valueOf(dt.getTime());//_HH_mm_ss
-		SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy_MM_dd");
-		String time = sdFormatter.format(start);
-		try {
-			File f = new File(recordPath+"Analyze_"+time+".csv");
-			if(!f.exists()){
-				f.createNewFile();
-			}
-			fw = new FileWriter(f,true);
-			fw.write("\n");
-			fw.write("operation,okOperationNum,okPointNum,failOperationNum,failPointNum,throughput,AVG,MIN,P10,P25,MEDIAN,P75,P90,P95,P99,P999,MAX,SLOWEST_THREAD");
-			
-					
-				
-		} catch (Exception erecordAnalyzeCSV) {
-			erecordAnalyzeCSV.printStackTrace();
-		}
-		finally{
-			if(fw != null){
-				try{
-					fw.close();
-				}catch (IOException e){
-					throw new  RuntimeException("Close Failed");
-				}
-			}
-		}
-	}
-	*/
+	
 	
 	/**
 	 * 根据操作类型（insert、Q1 - 8 ）分类检索final_result的内容并写入CSV
@@ -129,7 +100,6 @@ try {
 		Long start = Long.valueOf(dt.getTime());//_HH_mm_ss
 		SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy_MM_dd");
 		String time = sdFormatter.format(start);
-		
 		//写入吞吐量
 		try {
 			File f = new File(recordPath+"Analyze_report.csv");
@@ -150,29 +120,41 @@ try {
 				analyzeResultBean arb4 = (analyzeResultBean)alResult.get(4);
 				fw.write(arb4.getResult_value()+",");
 				analyzeResultBean arb5 = (analyzeResultBean)alResult.get(5);
-				fw.write(arb5.getResult_value()+",");
-				analyzeResultBean arb6 = (analyzeResultBean)alResult.get(6);
-				fw.write(arb6.getResult_value()+",");
-				analyzeResultBean arb7 = (analyzeResultBean)alResult.get(7);
-				fw.write(arb7.getResult_value()+",");
-				analyzeResultBean arb8 = (analyzeResultBean)alResult.get(8);
-				fw.write(arb8.getResult_value()+",");
-				analyzeResultBean arb9 = (analyzeResultBean)alResult.get(9);
-				fw.write(arb9.getResult_value()+",");
-				analyzeResultBean arb10 = (analyzeResultBean)alResult.get(10);
-				fw.write(arb10.getResult_value()+",");
-				analyzeResultBean arb11 = (analyzeResultBean)alResult.get(11);
-				fw.write(arb11.getResult_value()+",");
-				analyzeResultBean arb12 = (analyzeResultBean)alResult.get(12);
-				fw.write(arb12.getResult_value()+",");
-				analyzeResultBean arb13 = (analyzeResultBean)alResult.get(13);
-				fw.write(arb13.getResult_value()+",");
-				analyzeResultBean arb14 = (analyzeResultBean)alResult.get(14);
-				fw.write(arb14.getResult_value()+",");
-				analyzeResultBean arb15 = (analyzeResultBean)alResult.get(15);
-				fw.write(arb15.getResult_value()+",");
-				analyzeResultBean arb16 = (analyzeResultBean)alResult.get(16);
-				fw.write(arb16.getResult_value()+",");
+				fw.write("\n");
+				
+		} catch (Exception erecordAnalyzeCSV) {
+			erecordAnalyzeCSV.printStackTrace();
+		}
+		finally{
+			if(fw != null){
+				try{
+					fw.close();
+				}catch (IOException e){
+					throw new  RuntimeException("Close Failed");
+				}
+			}
+		}
+	}
+	
+	//只记录每个操作的吞吐量和AVG，便于统计周测confluence的结果。
+	public void recordTPAVGCSV(String recordPath,String fileName,ArrayList alResult,String operator){
+		FileWriter fw = null;
+		Date dt= new Date();
+		Long start = Long.valueOf(dt.getTime());//_HH_mm_ss
+		SimpleDateFormat sdFormatter = new SimpleDateFormat("yyyy_MM_dd");
+		String time = sdFormatter.format(start);
+		//写入吞吐量
+		try {
+			File f = new File(recordPath+"confluence.csv");
+			if(!f.exists()){
+				f.createNewFile();
+			}
+			fw = new FileWriter(f,true);
+//				按字段写值，不支持循环操作。
+				fw.write(operator+",");//本行的操作名称
+				analyzeResultBean arb4 = (analyzeResultBean)alResult.get(4);
+				fw.write(arb4.getResult_value()+",");
+				analyzeResultBean arb5 = (analyzeResultBean)alResult.get(5);
 				fw.write("\n");
 				
 		} catch (Exception erecordAnalyzeCSV) {
@@ -368,5 +350,56 @@ try {
 			}
 		}
 	}
+
+	//将最新写入mysql的表名，记录在文件里
+	public void recordMySQLDBname(String recordPath,String tbname){
+		FileWriter fw = null;
+	
+		
+		try {
+			File f = new File(recordPath+"mysql_tbname");
+			if(!f.exists()){
+				f.createNewFile();
+			}
+			fw = new FileWriter(f,true);
+				
+					fw.write(tbname);
+					fw.write("\n");
+				
+				
+			
+		} catch (Exception erecordAnalyzeCSV) {
+			erecordAnalyzeCSV.printStackTrace();
+		}
+		finally{
+			if(fw != null){
+				try{
+					fw.close();
+				}catch (IOException e){
+					throw new  RuntimeException("Close Failed");
+				}
+			}
+		}
+	}
+	
+//	将所有操作的所有AVG时间列表显示
+//	public void recordAllOperationAVG(String[] operationList,String dbip,String dbname,String user,String password,String tbname){
+//		System.out.println("进入AVG时间列表：");
+//		connectMysql cm = new connectMysql(dbip,dbname,user,password);
+//		ArrayList q1l = new ArrayList();
+//		
+//		for(int i=0;i<operationList.length;i++){
+//			System.out.println("数组："+operationList[i]+"tbname = "+tbname);
+//			
+//			q1l = cm.operationAVGList(tbname, operationList[i]);
+//		}
+//		System.out.println("q1l的长度："+q1l.size());
+//		
+//		for(int j=0;j<q1l.size();j++){
+//			operationAVGBean oab = (operationAVGBean)q1l.get(j);
+//			System.out.println(oab.getAvg()+"-----");
+//		}
+//		
+//	}
 
 }

@@ -3,6 +3,7 @@ package com.iotdbResultCSV.function;
 import java.util.ArrayList;
 
 import com.iotdbResultCSV.dom.analyzeResultBean;
+import com.iotdbResultCSV.dom.configBean;
 import com.iotdbResultCSV.dom.insertBean;
 import com.iotdbResultCSV.dom.latencyrateRecordBean;
 
@@ -41,34 +42,31 @@ public class main {
 //		alInsert = cm.fetchResultTB(cm.topTbName("Q8"));
 		
 //		根据recordType的内容，选择operator的内容，operator和final_result中operation的字段内容对应
-		if(recordType.equals("insert")){
+		if(recordType.equals("insert")||recordType.equals("isover")||recordType.equals("noover")){
 			operator="INGESTION";
 		}
-		if(recordType.equals("Lins")){
-			operator="INGESTION";
-		}
-		if(recordType.equals("Q1")){
+		if(recordType.equals("q1")){
 			operator="PRECISE_QUERY";		
 				}
-		if(recordType.equals("Q2")){
+		if(recordType.equals("q21")||recordType.equals("q22")||recordType.equals("q23")){
 			operator="RANGE_QUERY";
 		}
-		if(recordType.equals("Q3")){
+		if(recordType.equals("q31")||recordType.equals("q32")||recordType.equals("q33")){
 			operator="VALUE_RANGE_QUERY";
 		}
-		if(recordType.equals("Q4")){
+		if(recordType.equals("q4a1")||recordType.equals("q4a2")||recordType.equals("q4a3")||recordType.equals("q4b1")||recordType.equals("q4b2")||recordType.equals("q4b3")){
 			operator="AGG_RANGE_QUERY";
 		}
-		if(recordType.equals("Q5")){
+		if(recordType.equals("q5")){
 			operator="AGG_VALUE_QUERY";
 		}
-		if(recordType.equals("Q6")){
+		if(recordType.equals("q61")||recordType.equals("q62")||recordType.equals("q63")){
 			operator="AGG_RANGE_VALUE_QUERY";
 		}
-		if(recordType.equals("Q7")){
+		if(recordType.equals("q71")||recordType.equals("q72")||recordType.equals("q73")||recordType.equals("q74")){
 			operator="GROUP_BY_QUERY";
 		}
-		if(recordType.equals("Q8")){
+		if(recordType.equals("q8")){
 			operator="LATEST_POINT_QUERY";
 		}
 		
@@ -77,164 +75,26 @@ public class main {
 		//从最新的执行结果集中，根据选择的操作（insert ，Q1 - Q2），查找到的一批有记录的结果集
 		
 		alAnalyzeResult = cm.filterOperator(cm.topTbName(recordType),operator,alAnalyze);
-		
+
 		
 
 		
 //		将本次测试执行的流水信息写入csv文件，一个操作记录一个文件，使用操作类型和时间做文件名区分
-		rc.recordCSV(recordPath, recordType, alInsert);
+//		rc.recordCSV(recordPath, recordType, alInsert);暂时不记录流水信息
 //		写入analyze的
 //		初始化文件
 //		rc.initAnalyzeCSV(recordPath,recordType);
 //		将本次所有测试的分析结果汇总到一个相同的csv文件
 //		分析文件只写数据，为避免重复，在环境中使用sh文件，初始化csv的表头
 //		String throughput = cm.fetchThroughput(cm.topTbName(recordType), operator);
-		rc.recordAnalyzeCSV(recordPath,recordType,alAnalyzeResult,operator);
-		
-		
-//		for(int i=0;i<alAnalyze.size();i++){
-//			analyzeResultBean arb = (analyzeResultBean)alAnalyze.get(i);
-//			System.out.println(""+arb.getId()+" "+arb.getProjectID()+" "+arb.getOperation()+" "+arb.getResult_key()+" "+arb.getResult_value());
-//		}
-		
-		
-//		cm.recordCSV(recordPath, recordType,alInsert);
-//		for(int i=0;i<cm.fetchAnalyzTB(cm.topTbName("Q8"),"Q8").size();i++){
-//			analyzeResultBean arb = (analyzeResultBean)cm.fetchAnalyzTB(cm.topTbName("Q8"),"Q8").get(i);
-//			System.out.println(""+arb.getId()+"_"+arb.getProjectID()+"_"+arb.getOperation()+"_"+arb.getResult_key());
-//		}
-		
-//		cm.recordAnalyzeCSV("d:\\","Q8",alAnalyze);
-		
-		
-//		String[] mp =cm.fetchMsPs(cm.topTbName(recordType));
-		//记录latency和rate
-//		rc.recordLatencyRateCSV(recordPath,mp, operator);
-//		System.out.println("数组长度："+mp.length);
-//		for(int i=0;i<mp.length;i++){
-//			System.out.println(i+" -- "+mp[i]);
-//		}
-		
-		//获取最新操作的3个表的表名
-		String[] newest3tb=cm.nearby3lr(recordType);
-		String testdate = "";
-		for(int i=0;i<newest3tb.length;i++){
-			System.out.println(" -- "+newest3tb[i]);
-			testdate = cm.testDate(newest3tb[i]);//根据表名获取该操作的执行日期
-			String[] mp =cm.fetchMsPs(newest3tb[i]);//获得该表中的lantency和rate平均值，取3位小数。
-			rc.recordLatencyRateCSV(recordPath,mp, operator,testdate);//记录内容
-		}
-		
-		String[] recordlist = {"insert","Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q8"};
-		//单独用来最后记录所有的latency和rate
-		if(recordType.equals("Q8")){//判断当前执行到最后一个操作，开始写入latency和rate信息
-			try {
-				latencyrateRecordBean lrrb = new latencyrateRecordBean();
-				for(int i=0;i<27;i++){
-					if(i==0||i==1||i==2){
-						lrrb.setOperator(recordlist[0]);//根据行号，得到操作名称
-						String[] n3tb = cm.nearby3lr(recordlist[0]);//根据操作名称，得到最新的3个表
-						for(int j=0;j<3;j++){//将这个操作的3个表的时间写入list
-							lrrb.setTime(cm.testDate(n3tb[j]));
-							String[] mp = cm.fetchMsPs(n3tb[j]);
-							lrrb.setLatency(mp[0]);
-							lrrb.setRate(mp[1]);
-						}
-						
-					}
-					if(i==3||i==4||i==5){
-						lrrb.setOperator(recordlist[1]);
-						String[] n3tb = cm.nearby3lr(recordlist[1]);//根据操作名称，得到最新的3个表
-						for(int j=0;j<3;j++){//将这个操作的3个表的时间写入list
-							lrrb.setTime(cm.testDate(n3tb[j]));
-							String[] mp = cm.fetchMsPs(n3tb[j]);
-							lrrb.setLatency(mp[0]);
-							lrrb.setRate(mp[1]);
-						}
-						
-					}
-					if(i==6||i==7||i==8){
-						lrrb.setOperator(recordlist[2]);
-						String[] n3tb = cm.nearby3lr(recordlist[2]);//根据操作名称，得到最新的3个表
-						for(int j=0;j<3;j++){//将这个操作的3个表的时间写入list
-							lrrb.setTime(cm.testDate(n3tb[j]));
-							String[] mp = cm.fetchMsPs(n3tb[j]);
-							lrrb.setLatency(mp[0]);
-							lrrb.setRate(mp[1]);
-						}
-					}
-					if(i==9||i==10||i==11){
-						lrrb.setOperator(recordlist[3]);
-						String[] n3tb = cm.nearby3lr(recordlist[3]);//根据操作名称，得到最新的3个表
-						for(int j=0;j<3;j++){//将这个操作的3个表的时间写入list
-							lrrb.setTime(cm.testDate(n3tb[j]));
-							String[] mp = cm.fetchMsPs(n3tb[j]);
-							lrrb.setLatency(mp[0]);
-							lrrb.setRate(mp[1]);
-						}
-					}
-					if(i==12||i==13||i==14){
-						lrrb.setOperator(recordlist[4]);
-						String[] n3tb = cm.nearby3lr(recordlist[4]);//根据操作名称，得到最新的3个表
-						for(int j=0;j<3;j++){//将这个操作的3个表的时间写入list
-							lrrb.setTime(cm.testDate(n3tb[j]));
-							String[] mp = cm.fetchMsPs(n3tb[j]);
-							lrrb.setLatency(mp[0]);
-							lrrb.setRate(mp[1]);
-						}
-					}
-					if(i==15||i==16||i==17){
-						lrrb.setOperator(recordlist[5]);
-						String[] n3tb = cm.nearby3lr(recordlist[5]);//根据操作名称，得到最新的3个表
-						for(int j=0;j<3;j++){//将这个操作的3个表的时间写入list
-							lrrb.setTime(cm.testDate(n3tb[j]));
-							String[] mp = cm.fetchMsPs(n3tb[j]);
-							lrrb.setLatency(mp[0]);
-							lrrb.setRate(mp[1]);
-						}
-					}
-					if(i==18||i==19||i==20){
-						lrrb.setOperator(recordlist[6]);
-						String[] n3tb = cm.nearby3lr(recordlist[6]);//根据操作名称，得到最新的3个表
-						for(int j=0;j<3;j++){//将这个操作的3个表的时间写入list
-							lrrb.setTime(cm.testDate(n3tb[j]));
-							String[] mp = cm.fetchMsPs(n3tb[j]);
-							lrrb.setLatency(mp[0]);
-							lrrb.setRate(mp[1]);
-						}
-					}
-					if(i==21||i==22||i==23){
-						lrrb.setOperator(recordlist[7]);
-						String[] n3tb = cm.nearby3lr(recordlist[7]);//根据操作名称，得到最新的3个表
-						for(int j=0;j<3;j++){//将这个操作的3个表的时间写入list
-							lrrb.setTime(cm.testDate(n3tb[j]));
-							String[] mp = cm.fetchMsPs(n3tb[j]);
-							lrrb.setLatency(mp[0]);
-							lrrb.setRate(mp[1]);
-						}
-					}
-					if(i==24||i==25||i==26){
-						lrrb.setOperator(recordlist[8]);
-						String[] n3tb = cm.nearby3lr(recordlist[8]);//根据操作名称，得到最新的3个表
-						for(int j=0;j<3;j++){//将这个操作的3个表的时间写入list
-							lrrb.setTime(cm.testDate(n3tb[j]));
-							String[] mp = cm.fetchMsPs(n3tb[j]);
-							lrrb.setLatency(mp[0]);
-							lrrb.setRate(mp[1]);
-						}
-					}
-					alLatencyRateRecord.add(lrrb);
-						
-				}
-				
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		rc.recordLatencyRateCSVbyList("/home/liurui/lm_test", alLatencyRateRecord);
-		
+//		最新修改为记录正常操作和错误操作数，正确写点和错误写点数，以及基本的吞吐量和平均延迟-暂时屏蔽
+//		rc.recordAnalyzeCSV(recordPath,recordType,alAnalyzeResult,operator);
+//		为confluence结果页记录AVG和吞吐
+		rc.recordTPAVGCSV(recordPath,recordType,alAnalyzeResult,operator);
+//		在一个文件里记录写入的最新mysql表表名
+		rc.recordMySQLDBname( recordPath,cm.topTbName(recordType));
 	}
 
-//		java -jar iotdbResultCSV.jar "192.168.130.19" "weekly_test" "root" "Ise_Nel_2017" "Q5" "d:\\" "Q5"
+//		java -jar iotdbResultCSV.jar "192.168.130.4" "weekly_test" "root" "Ise_Nel_2017" "q5" "d:\\"
 }
 
